@@ -52,27 +52,31 @@ st.markdown("""
 @st.cache_resource
 def load_model_and_encoders():
     try:
-        with open('sleep_disorder_model.pkl', 'rb') as f:
+        import os
+        current_dir = os.path.dirname(__file__)
+        
+        with open(os.path.join(current_dir, 'sleep_disorder_model.pkl'), 'rb') as f:
             model = pickle.load(f)
         
-        with open('label_encoder.pkl', 'rb') as f:
+        with open(os.path.join(current_dir, 'label_encoder.pkl'), 'rb') as f:
             label_encoder = pickle.load(f)
         
-        with open('gender_encoder.pkl', 'rb') as f:
+        with open(os.path.join(current_dir, 'gender_encoder.pkl'), 'rb') as f:
             gender_encoder = pickle.load(f)
         
-        with open('occupation_encoder.pkl', 'rb') as f:
+        with open(os.path.join(current_dir, 'occupation_encoder.pkl'), 'rb') as f:
             occupation_encoder = pickle.load(f)
         
-        with open('bmi_encoder.pkl', 'rb') as f:
+        with open(os.path.join(current_dir, 'bmi_encoder.pkl'), 'rb') as f:
             bmi_encoder = pickle.load(f)
         
-        with open('feature_columns.pkl', 'rb') as f:
+        with open(os.path.join(current_dir, 'feature_columns.pkl'), 'rb') as f:
             feature_columns = pickle.load(f)
         
         return model, label_encoder, gender_encoder, occupation_encoder, bmi_encoder, feature_columns
     except Exception as e:
         st.error(f"Error loading model: {e}")
+        st.info("Please make sure all model files (.pkl) are present in the repository.")
         return None, None, None, None, None, None
 
 # Load model and data
@@ -81,9 +85,31 @@ model, label_encoder, gender_encoder, occupation_encoder, bmi_encoder, feature_c
 # Load original data for visualization
 @st.cache_data
 def load_data():
-    return pd.read_csv('sleep.csv')
+    try:
+        import os
+        current_dir = os.path.dirname(__file__)
+        return pd.read_csv(os.path.join(current_dir, 'sleep.csv'))
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
+        return pd.DataFrame()  # Return empty dataframe
 
-df = load_data()
+# Load model and data with error handling
+try:
+    model, label_encoder, gender_encoder, occupation_encoder, bmi_encoder, feature_columns = load_model_and_encoders()
+    df = load_data()
+    
+    # Health check
+    if model is None:
+        st.error("❌ Model loading failed! Please check if all .pkl files are present.")
+        st.stop()
+    
+    if df.empty:
+        st.error("❌ Data loading failed! Please check if sleep.csv file is present.")
+        st.stop()
+        
+except Exception as e:
+    st.error(f"❌ App initialization failed: {e}")
+    st.stop()
 
 # Main title
 st.markdown('<h1 class="main-header">😴 Sleep Disorder Prediction System</h1>', unsafe_allow_html=True)
